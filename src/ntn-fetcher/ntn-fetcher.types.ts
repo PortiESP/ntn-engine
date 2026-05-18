@@ -1,9 +1,14 @@
 
-export type T_NDBE_Options = {
-
+export type T_Fetcher_Options = {
     /** Notion API Token */
     notionToken: string;
+}
 
+export type T_Cache_Options = {
+    /** Enable cache (wether to instantiate cache or not)*/
+    enabled?: boolean;
+    /** Cache time to live (in seconds) */
+    ttl?: number;
 }
 
 

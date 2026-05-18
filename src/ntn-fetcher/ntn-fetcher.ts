@@ -1,14 +1,14 @@
 import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
-import { T_GenerateTSInterfaceOptions, T_NDBE_Options } from "./ndbe.types";
-import { config, configDotenv } from "dotenv";
-import { richText2String } from "./ndbe.utils";
-import { generateTSInterface } from "./ts_iface_generator";
+import { T_GenerateTSInterfaceOptions, T_Fetcher_Options } from "./ntn-fetcher.types";
+import { config } from "dotenv";
+import { richText2String } from "./ntn-fetcher.utils";
+import { generateTSInterface } from "./ts_iface_generator.utils";
 
-export class NotionDBEngine {
+export class NotionFetcher {
     client: Client;
-    options: T_NDBE_Options;
+    options: T_Fetcher_Options;
 
-    constructor(options: T_NDBE_Options) {
+    constructor(options: T_Fetcher_Options) {
         this.options = options;
         this.client = new Client({
             auth: this.options.notionToken || process.env.NOTION_TOKEN,
@@ -367,6 +367,6 @@ if (!process.env.NOTION_TOKEN) {
     throw new Error("NOTION_TOKEN not found in environment variables");
 }
 
-export const ntn = new NotionDBEngine({ notionToken: process.env.NOTION_TOKEN, });
+export const ntn = new NotionFetcher({ notionToken: process.env.NOTION_TOKEN, });
 
 

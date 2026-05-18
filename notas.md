@@ -1,4 +1,3 @@
-
 ## Workflow
 
 [x] Instantiate the class `NotionDBEngine`
@@ -12,6 +11,7 @@
 [x] CRUD Data from Datasources (Notion Database Rows)
 [x] CRUD Notion Page contents
 [ ] Upload Files and Images to Notion (File and Image Properties)
+[ ] The npx command accepts an arg like "--out-dir ./generated" to specify the output directory for the generated interfaces.
 [x] Content Queries
 
 ## Docs

@@ -1,5 +1,5 @@
-import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "./ndbe.utils";
-import { T_GenerateTSInterfaceOptions } from "./ndbe.types";
+import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "./ntn-fetcher.utils";
+import { T_GenerateTSInterfaceOptions } from "./ntn-fetcher.types";
 import { DataSourceObjectResponse } from "@notionhq/client";
 
 export function generateTSInterface(schema: DataSourceObjectResponse, options?: T_GenerateTSInterfaceOptions) {
@@ -9,17 +9,17 @@ export function generateTSInterface(schema: DataSourceObjectResponse, options?: 
     let iface = `export interface ${interfaceName} {\n`;
 
     const properties: string[] = [];
-    for (const [key, value] of Object.entries(schema.properties)) {
-        if (options?.excludeProperties && options.excludeProperties.includes(key)) continue;
-        if (options?.includeProperties && !options.includeProperties.includes(key)) continue;
+    for (const [propertyKey, propertyValue] of Object.entries(schema.properties)) {
+        if (options?.excludeProperties && options.excludeProperties.includes(propertyKey)) continue;
+        if (options?.includeProperties && !options.includeProperties.includes(propertyKey)) continue;
 
-        const type = getPropertyTypeDefinition(schema.properties[key].type);
+        const type = getPropertyTypeDefinition(propertyValue.type);
         if (type) {
             notionObjectResponseTypes.push(type);
-            properties.push(key);
-            iface += `    "${key}": ${type};\n`;
+            properties.push(propertyKey);
+            iface += `    "${propertyKey}": ${type};\n`;
         } else {
-            iface += `    // [PROPERTY TYPE DEFINITION NOT FOUND] key:${key} - type:${schema.properties[key].type}\n`;
+            iface += `    // [PROPERTY TYPE DEFINITION NOT FOUND] key:${propertyKey} - type:${propertyValue.type}\n`;
         }
     }
 

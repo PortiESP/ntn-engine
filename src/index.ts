@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { NotionDBEngine } from "./NotionDBEngine/ndbe";
-import { NotionDBEntity } from "./NotionDBEngine/db_entity";
+import { NotionFetcher } from "./ntn-fetcher/ntn-fetcher";
+import { NotionFetcherDBEntity } from "./ntn-fetcher/ntn-fetcher.entity";
 
 config();
 
@@ -9,11 +9,11 @@ if (!process.env.NOTION_TOKEN) {
     process.exit(1);
 }
 
-const ntn = new NotionDBEngine({
+const ntn = new NotionFetcher({
     notionToken: process.env.NOTION_TOKEN,
 });
 
-const entity = new NotionDBEntity("3643f965-507d-802d-b642-000b392aa766");
+const entity = new NotionFetcherDBEntity("3643f965-507d-802d-b642-000b392aa766");
 
 // console.dir(listAllPropertyTypes(), { depth: null, colors: true });
 
