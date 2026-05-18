@@ -8,7 +8,7 @@ export class NotionEngine {
     public id2Title: Record<string, string> = {};
 
     public constructor(dbNames?: string[]) {
-        if(dbNames) this.setup(dbNames);
+        if (dbNames) this.setup(dbNames);
     }
 
     public async setup(dbNames: string[]) {
@@ -20,6 +20,8 @@ export class NotionEngine {
             this.db[dbName] = new NotionFetcherDBEntity(db.id);
             this.title2Id[dbName] = db.id;
             this.id2Title[db.id] = dbName;
+
+            console.log(`[NotionEngine.setup] DB [${dbName}] -> [${db.id}] initialized`);
         }
     }
 
@@ -38,10 +40,10 @@ export class NotionEngine {
             const datasource_id = payload.data?.parent?.data_source_id
             if (!datasource_id) throw new Error(`[NotionEngine.handleWebhook] Datasource ID not found`);
 
-            const dbEntity = this.db[datasource_id];
+            const dbEntity = this.db[this.id2Title[datasource_id]];
             if (!dbEntity) throw new Error(`[NotionEngine.handleWebhook] DBEntity not found for datasource_id ${datasource_id}`);
 
-            dbEntity.skipCache()
+            // Cache has been removed, so no need to skip or invalidate it here anymore.
 
         } catch (error) {
             console.log(error)
