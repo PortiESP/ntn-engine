@@ -1,5 +1,8 @@
-import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
-import { T_NDBE_Options } from "./ndbe.types";
+import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
+import { T_GenerateTSInterfaceOptions, T_NDBE_Options } from "./ndbe.types";
+import { config, configDotenv } from "dotenv";
+import { richText2String } from "./ndbe.utils";
+import { generateTSInterface } from "./ts_iface_generator";
 
 export class NotionDBEngine {
     client: Client;
@@ -63,6 +66,19 @@ export class NotionDBEngine {
         })
             // Parse the results (if callback is provided)
             .then((res) => res.results as DataSourceObjectResponse[]);
+    }
+
+    /**
+     * Get a datasource schema by title
+     */
+    async getDatasourceSchemaByTitle(title: string) {
+        return await this.client.search({
+            filter: {
+                property: 'object',
+                value: 'data_source',
+            },
+        })
+            .then((res) => res.results.find((ds: any) => richText2String(ds.title) === title) as DataSourceObjectResponse);
     }
 
     /**
@@ -140,7 +156,7 @@ export class NotionDBEngine {
     async getDatasourceEntry(id: string) {
         return await this.client.pages.retrieve({
             page_id: id,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -149,7 +165,7 @@ export class NotionDBEngine {
     async getDatasourceSchema(id: string) {
         return await this.client.dataSources.retrieve({
             data_source_id: id,
-        });
+        }) as DataSourceObjectResponse;
     }
 
     /**
@@ -161,7 +177,7 @@ export class NotionDBEngine {
         return await this.client.pages.update({
             page_id: id,
             in_trash: true,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -174,7 +190,7 @@ export class NotionDBEngine {
         return await this.client.pages.update({
             page_id: id,
             properties: data,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -189,7 +205,7 @@ export class NotionDBEngine {
                 data_source_id: id,
             },
             properties: data,
-        });
+        }) as PageObjectResponse;
     }
 
 
@@ -218,7 +234,7 @@ export class NotionDBEngine {
 
         return await this.client.pages.retrieve({
             page_id: id,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -230,7 +246,7 @@ export class NotionDBEngine {
         return await this.client.pages.update({
             page_id: id,
             in_trash: true,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -243,7 +259,7 @@ export class NotionDBEngine {
         return await this.client.pages.update({
             page_id: id,
             properties: data,
-        });
+        }) as PageObjectResponse;
     }
 
     /**
@@ -258,7 +274,7 @@ export class NotionDBEngine {
                 page_id: id,
             },
             properties: data,
-        });
+        }) as PageObjectResponse;
     }
 
     // ---------------------- Page content ----------------------
@@ -331,4 +347,26 @@ export class NotionDBEngine {
         });
     }
 
+    // ---------------------- Generated TS Interface ----------------------
+
+    /**
+     * Generate a TS interface for a datasource
+     * 
+     * @param id - Datasource id
+     */
+    async generateTSInterface(id: string, options?: T_GenerateTSInterfaceOptions) {
+        const schema = await this.getDatasourceSchema(id);
+        return generateTSInterface(schema, options);
+    }
+
 }
+
+
+config()
+if (!process.env.NOTION_TOKEN) {
+    throw new Error("NOTION_TOKEN not found in environment variables");
+}
+
+export const ntn = new NotionDBEngine({ notionToken: process.env.NOTION_TOKEN, });
+
+
