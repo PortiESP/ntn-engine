@@ -5,7 +5,8 @@ import { DataSourceObjectResponse } from "@notionhq/client";
 export function generateTSInterface(schema: DataSourceObjectResponse, options?: T_GenerateTSInterfaceOptions) {
     const notionObjectResponseTypes: string[] = [];
 
-    let iface = `export type ${options?.prefix || ''}${richText2String(schema.title)}${options?.suffix || ''} = {\n`;
+    const interfaceName = `${options?.prefix || ''}${richText2String(schema.title)}${options?.suffix || ''}`;
+    let iface = `export interface ${interfaceName} {\n`;
 
     for (const [key, value] of Object.entries(schema.properties)) {
         if (options?.excludeProperties && options.excludeProperties.includes(key)) continue;
@@ -14,7 +15,7 @@ export function generateTSInterface(schema: DataSourceObjectResponse, options?: 
         const type = getPropertyTypeDefinition(schema.properties[key].type);
         if (type) {
             notionObjectResponseTypes.push(type);
-            iface += `    ${key}: ${type};\n`;
+            iface += `    "${key}": ${type};\n`;
         } else {
             iface += `    // [PROPERTY TYPE DEFINITION NOT FOUND] key:${key} - type:${schema.properties[key].type}\n`;
         }
@@ -28,7 +29,8 @@ export function generateTSInterface(schema: DataSourceObjectResponse, options?: 
     return {
         imports,
         types: notionObjectResponseTypes,
-        interface: iface
+        interface: iface,
+        interfaceName
     };
 
 
