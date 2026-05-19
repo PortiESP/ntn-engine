@@ -1,7 +1,7 @@
 import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
 import { T_GenerateTSInterfaceOptions, T_Fetcher_Options } from "./ntn-fetcher.types";
 import { config } from "dotenv";
-import { richText2String } from "./ntn-fetcher.utils";
+import { richText2String } from "../utils/ntn-fetcher.utils";
 import { generateTSInterface } from "./ts_iface_generator.utils";
 
 export class NotionFetcher {

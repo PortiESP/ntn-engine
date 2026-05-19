@@ -1,4 +1,4 @@
-import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "./ntn-fetcher.utils";
+import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "../utils/ntn-fetcher.utils";
 import { T_GenerateTSInterfaceOptions } from "./ntn-fetcher.types";
 import { DataSourceObjectResponse } from "@notionhq/client";
 

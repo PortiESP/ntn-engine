@@ -17,7 +17,8 @@
             "default": "./generated/ntn_interfaces.ts"
         },
         "./engine": "./src/ntn-engine/ntn-engine.ts",
-        "./fetcher": "./src/ntn-fetcher/ntn-fetcher.ts"
+        "./fetcher": "./src/ntn-fetcher/ntn-fetcher.ts",
+        "./parsers": "./src/ntn-parsers/index.ts"
     },
     "keywords": [],
     "author": "",

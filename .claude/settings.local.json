@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Porti\\\\Desktop\\\\Projects-2026\\\\microservicios\\\\notion-db-engine\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(pnpm run *)",
+      "Bash(Remove-Item \"src\\\\ntn-fetcher\\\\ntn-fetcher.utils.ts\")"
+    ]
+  }
+}
