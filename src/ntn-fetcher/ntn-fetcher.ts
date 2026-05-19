@@ -1,5 +1,5 @@
 import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
-import { T_GenerateTSInterfaceOptions, T_Fetcher_Options } from "./ntn-fetcher.types";
+import { T_AppendImageOptions, T_GenerateTSInterfaceOptions, T_Fetcher_Options, T_UploadFileInput } from "./ntn-fetcher.types";
 import { config } from "dotenv";
 import { richText2String } from "../utils/ntn-fetcher.utils";
 import { generateTSInterface } from "./ts_iface_generator.utils";
@@ -347,6 +347,89 @@ export class NotionFetcher {
         });
     }
 
+    // ---------------------- File uploads ----------------------
+
+    /**
+     * Upload a file to Notion and return its file upload ID.
+     * Accepts binary data (Uint8Array / ArrayBuffer / Buffer), a base64 string, a Blob, or a ReadableStream.
+     */
+    async uploadFile(input: T_UploadFileInput): Promise<string> {
+        const filename    = input.name ?? input.filename;
+        const contentType = input.contentType ?? mimeFromExt(input.filename);
+
+        let blob: Blob;
+
+        if ("blob" in input) {
+            blob = input.blob.type ? input.blob : new Blob([input.blob], { type: contentType });
+        } else if ("base64" in input) {
+            const binary = atob(input.base64);
+            const bytes  = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            blob = new Blob([bytes], { type: contentType });
+        } else if ("stream" in input) {
+            blob = await new Response(input.stream).blob();
+            if (blob.type !== contentType) blob = blob.slice(0, blob.size, contentType);
+        } else {
+            // Cast needed: TypeScript narrows Uint8Array to ArrayBufferLike which doesn't satisfy BlobPart, but Blob() accepts it fine at runtime
+            blob = new Blob([input.data as ArrayBuffer], { type: contentType });
+        }
+
+        const slot = await this.client.fileUploads.create({ filename, content_type: contentType });
+        await this.client.fileUploads.send({ file_upload_id: slot.id, file: { filename, data: blob } });
+        return slot.id;
+    }
+
+    /**
+     * Upload an image and append it as a block to a page.
+     *
+     * @param pageId  - Target page / block id
+     * @param input   - Local file path or Buffer
+     * @param options - Optional caption
+     */
+    async appendImageBlock(pageId: string, input: T_UploadFileInput, options?: T_AppendImageOptions): Promise<void> {
+        const uploadId = await this.uploadFile(input);
+        const caption  = options?.caption
+            ? [{ type: "text" as const, text: { content: options.caption } }]
+            : [];
+
+        await this.appendPageContent(pageId, [{
+            type: "image",
+            image: { type: "file_upload", file_upload: { id: uploadId }, caption },
+        }]);
+    }
+
+    /**
+     * Upload one or more files and set them on a `files`-type property of a datasource entry.
+     *
+     * @param pageId       - Entry (page) id
+     * @param propertyName - Name of the files property in the datasource
+     * @param inputs       - One or more files to upload
+     * @param mode         - "replace" clears existing files; "append" adds to them (default: "replace")
+     */
+    async setEntryFileProperty(
+        pageId: string,
+        propertyName: string,
+        inputs: T_UploadFileInput[],
+        mode: "replace" | "append" = "replace",
+    ): Promise<PageObjectResponse> {
+        const uploadIds = await Promise.all(inputs.map(f => this.uploadFile(f)));
+
+        const newFiles = uploadIds.map((id, idx) => {
+            const input    = inputs[idx];
+            const filename = input.name ?? input.filename;
+            return { type: "file_upload" as const, file_upload: { id }, name: filename };
+        });
+
+        if (mode === "append") {
+            const page = await this.client.pages.retrieve({ page_id: pageId }) as PageObjectResponse;
+            const prop = (page.properties as any)[propertyName];
+            const existing: any[] = prop?.type === "files" ? prop.files : [];
+            newFiles.unshift(...existing);
+        }
+
+        return this.updateDatasourceEntry(pageId, { [propertyName]: { files: newFiles } });
+    }
+
     // ---------------------- Generated TS Interface ----------------------
 
     /**
@@ -361,6 +444,16 @@ export class NotionFetcher {
 
 }
 
+
+const MIME: Record<string, string> = {
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+    gif: "image/gif",  webp: "image/webp", svg: "image/svg+xml",
+    pdf: "application/pdf", mp4: "video/mp4", mp3: "audio/mpeg",
+};
+function mimeFromExt(filename: string): string {
+    const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+    return MIME[ext] ?? "application/octet-stream";
+}
 
 config()
 if (!process.env.NOTION_TOKEN) {

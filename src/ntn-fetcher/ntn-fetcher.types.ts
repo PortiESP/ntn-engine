@@ -1,3 +1,12 @@
+export type T_UploadFileInput =
+    | { data: Uint8Array | ArrayBuffer | Buffer; filename: string; name?: string; contentType?: string }
+    | { base64: string;                          filename: string; name?: string; contentType?: string }
+    | { blob: Blob;                              filename: string; name?: string; contentType?: string }
+    | { stream: ReadableStream<Uint8Array>;      filename: string; name?: string; contentType?: string }
+
+export type T_AppendImageOptions = {
+    caption?: string;
+}
 
 export type T_Fetcher_Options = {
     /** Notion API Token */
