@@ -6,10 +6,17 @@ export function parseMarkdown(blocks: BlockObjectResponse[], indent = ""): strin
     const lines: string[] = [];
     let numberedIndex = 0;
 
-    for (const block of blocks) {
+    for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const next  = blocks[i + 1];
         const children: BlockObjectResponse[] = (block as any).children ?? [];
 
         if (block.type !== "numbered_list_item") numberedIndex = 0;
+
+        // Emit a blank line after the last item of a list group so the next
+        // block is not merged into the list by markdown parsers.
+        const isLastListItem = (type: string) =>
+            block.type === type && next?.type !== type;
 
         switch (block.type) {
             case "paragraph": {
@@ -37,22 +44,29 @@ export function parseMarkdown(blocks: BlockObjectResponse[], indent = ""): strin
             case "bulleted_list_item":
                 lines.push(`${indent}- ${richTextToMarkdown(block.bulleted_list_item.rich_text)}`);
                 if (children.length) lines.push(parseMarkdown(children, indent + "  "));
+                if (isLastListItem("bulleted_list_item")) lines.push("");
                 break;
             case "numbered_list_item":
                 numberedIndex++;
                 lines.push(`${indent}${numberedIndex}. ${richTextToMarkdown(block.numbered_list_item.rich_text)}`);
                 if (children.length) lines.push(parseMarkdown(children, indent + "   "));
+                if (isLastListItem("numbered_list_item")) lines.push("");
                 break;
             case "to_do": {
                 const check = block.to_do.checked ? "x" : " ";
                 lines.push(`${indent}- [${check}] ${richTextToMarkdown(block.to_do.rich_text)}`);
                 if (children.length) lines.push(parseMarkdown(children, indent + "  "));
+                if (isLastListItem("to_do")) lines.push("");
                 break;
             }
-            case "toggle":
-                lines.push(`${indent}${richTextToMarkdown(block.toggle.rich_text)}`);
-                if (children.length) lines.push(parseMarkdown(children, indent + "  "));
+            case "toggle": {
+                lines.push(`${indent}> ${richTextToMarkdown(block.toggle.rich_text)}`);
+                if (children.length) {
+                    parseMarkdown(children, indent).split("\n").forEach(l => lines.push(`${indent}> > ${l}`));
+                }
+                lines.push("");
                 break;
+            }
             case "quote": {
                 lines.push(`${indent}> ${richTextToMarkdown(block.quote.rich_text)}`);
                 if (children.length) {
@@ -142,6 +156,8 @@ export function parseMarkdown(blocks: BlockObjectResponse[], indent = ""): strin
                         lines.push(`| ${sep.join(" | ")} |`);
                         for (let r = 1; r < rows.length; r++) lines.push(`| ${rows[r].join(" | ")} |`);
                     } else {
+                        // GFM requires a header row before the separator — emit empty cells
+                        lines.push(`| ${Array(colCount).fill(" ").join(" | ")} |`);
                         lines.push(`| ${sep.join(" | ")} |`);
                         for (const row of rows) lines.push(`| ${row.join(" | ")} |`);
                     }

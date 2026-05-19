@@ -2,14 +2,47 @@ import { BlockObjectResponse } from "@notionhq/client";
 import { richText2String } from "../../utils/ntn-fetcher.utils.js";
 import { T_ParsedBlock } from "../ntn-parsers.types.js";
 
-export function parsePlainJSON(blocks: BlockObjectResponse[]): T_ParsedBlock[] {
+export function parsePlainJSON(blocks: BlockObjectResponse[], groupLists = true): T_ParsedBlock[] {
     const result: T_ParsedBlock[] = [];
+    let i = 0;
 
-    for (const block of blocks) {
+    while (i < blocks.length) {
+        const block = blocks[i];
+
+        // Group consecutive list items into a single object
+        if (groupLists && (block.type === "bulleted_list_item" || block.type === "numbered_list_item")) {
+            const groupType  = block.type;
+            const listType   = groupType === "bulleted_list_item" ? "bulleted_list" as const : "numbered_list" as const;
+            const items: T_ParsedBlock[] = [];
+
+            while (i < blocks.length && blocks[i].type === groupType) {
+                const item = blocks[i];
+                const itemChildren: BlockObjectResponse[] = (item as any).children ?? [];
+                // Children of a list item are already implicitly nested — no need to re-wrap in bulleted_list/numbered_list
+                const parsedChildren = itemChildren.length > 0 ? parsePlainJSON(itemChildren, false) : undefined;
+
+                if (item.type === "bulleted_list_item") {
+                    items.push({ type: "bulleted_list_item", text: richText2String(item.bulleted_list_item.rich_text), children: parsedChildren });
+                } else if (item.type === "numbered_list_item") {
+                    items.push({ type: "numbered_list_item", text: richText2String(item.numbered_list_item.rich_text), children: parsedChildren });
+                }
+                i++;
+            }
+
+            result.push({ type: listType, items });
+            continue;
+        }
+
         const children: BlockObjectResponse[] = (block as any).children ?? [];
         const parsedChildren = children.length > 0 ? parsePlainJSON(children) : undefined;
 
         switch (block.type) {
+            case "bulleted_list_item":
+                result.push({ type: "bulleted_list_item", text: richText2String(block.bulleted_list_item.rich_text), children: children.length > 0 ? parsePlainJSON(children, false) : undefined });
+                break;
+            case "numbered_list_item":
+                result.push({ type: "numbered_list_item", text: richText2String(block.numbered_list_item.rich_text), children: children.length > 0 ? parsePlainJSON(children, false) : undefined });
+                break;
             case "paragraph":
                 result.push({ type: "paragraph", text: richText2String(block.paragraph.rich_text), children: parsedChildren });
                 break;
@@ -24,12 +57,6 @@ export function parsePlainJSON(blocks: BlockObjectResponse[]): T_ParsedBlock[] {
                 break;
             case "heading_4":
                 result.push({ type: "heading_4", text: richText2String(block.heading_4.rich_text), level: 4, children: parsedChildren });
-                break;
-            case "bulleted_list_item":
-                result.push({ type: "bulleted_list_item", text: richText2String(block.bulleted_list_item.rich_text), children: parsedChildren });
-                break;
-            case "numbered_list_item":
-                result.push({ type: "numbered_list_item", text: richText2String(block.numbered_list_item.rich_text), children: parsedChildren });
                 break;
             case "to_do":
                 result.push({ type: "to_do", text: richText2String(block.to_do.rich_text), checked: block.to_do.checked, children: parsedChildren });
@@ -153,6 +180,8 @@ export function parsePlainJSON(blocks: BlockObjectResponse[]): T_ParsedBlock[] {
                 result.push({ type: "unsupported" });
                 break;
         }
+
+        i++;
     }
 
     return result;

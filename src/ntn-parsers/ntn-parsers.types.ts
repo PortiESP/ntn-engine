@@ -13,6 +13,7 @@ type T_ParsedBlockTable    = T_ParsedBlockBase & { type: "table"; has_column_hea
 type T_ParsedBlockTableRow = T_ParsedBlockBase & { type: "table_row"; cells: string[] }
 type T_ParsedBlockColumn   = T_ParsedBlockBase & { type: "column_list" | "column" }
 type T_ParsedBlockChildRef = T_ParsedBlockBase & { type: "child_page" | "child_database"; title: string }
+type T_ParsedBlockList     = { type: "bulleted_list" | "numbered_list"; items: T_ParsedBlock[] }
 type T_ParsedBlockOther    = T_ParsedBlockBase & { type: "breadcrumb" | "table_of_contents" | "tab" | "synced_block" | "template" | "link_to_page" | "meeting_notes" | "transcription" | "unsupported" }
 
 export type T_ParsedBlock =
@@ -25,6 +26,7 @@ export type T_ParsedBlock =
     | T_ParsedBlockLink
     | T_ParsedBlockEquation
     | T_ParsedBlockDivider
+    | T_ParsedBlockList
     | T_ParsedBlockTable
     | T_ParsedBlockTableRow
     | T_ParsedBlockColumn
