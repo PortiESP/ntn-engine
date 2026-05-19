@@ -9,7 +9,7 @@
 [x] Get Schemas of Datasources (Notion Database Properties)
 [x] CRUD Data from Datasources (Notion Database Rows)
 [x] CRUD Notion Page contents
-[ ] Upload Files and Images to Notion (File and Image Properties)
+[x] Upload Files and Images to Notion (File and Image Properties)
 [ ] The npx command accepts an arg like "--out-dir ./generated" to specify the output directory for the generated interfaces.
 [x] Parse Page content as easy JSON format (let the user decide between some ready-to-use parsers like markdown, plain-json, etc.) or a custom one.
 [x] Content Queries

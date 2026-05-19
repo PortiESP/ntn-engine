@@ -2,9 +2,9 @@
 
 import fs from "fs";
 import path from "path";
-import { NotionDBEngine } from "../src/NotionDBEngine/ndbe";
+import { NotionFetcher } from "../src/ntn-fetcher/ntn-fetcher.js";
 import { configDotenv } from "dotenv";
-import { richText2String } from "../src/NotionDBEngine/ndbe.utils";
+import { richText2String } from "../src/utils/ntn-fetcher.utils.js";
 
 configDotenv();
 
@@ -12,7 +12,7 @@ if (!process.env.NOTION_TOKEN) {
     throw new Error("NOTION_TOKEN is not defined");
 }
 
-const ntn = new NotionDBEngine({
+const ntn = new NotionFetcher({
     notionToken: process.env.NOTION_TOKEN,
 });
 
@@ -30,7 +30,7 @@ type TSInterfaceResult = {
 // ==========================================================================================
 // 1. Fetch & Generate Interfaces
 // ==========================================================================================
-async function generateInterfaces(ntn: NotionDBEngine): Promise<TSInterfaceResult[]> {
+async function generateInterfaces(ntn: NotionFetcher): Promise<TSInterfaceResult[]> {
     console.log("[NotionDBEngine :: GenIfaces] Fetching Notion datasources...");
     const datasources = await ntn.getAllDatasources();
 

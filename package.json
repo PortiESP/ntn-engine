@@ -1,24 +1,47 @@
 {
-    "name": "ntn-engine",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "name": "@porti-esp/ntn-engine",
+    "version": "1.9.1",
+    "description": "Notion database engine for querying and managing Notion databases",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "repository": {
+        "url": ""
+    },
+    "files": [
+        "dist",
+        "bin"
+    ],
     "scripts": {
         "dev": "npx tsx --watch src src/index.ts",
-        "build": "tsc",
-        "start": "node dist/index.js"
+        "clean": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\"",
+        "build": "pnpm clean && tsc",
+        "start": "node dist/index.js",
+        "prepublishOnly": "pnpm build",
+        "publish:npm": "pnpm prepublishOnly && npm publish --access public"
     },
     "bin": {
         "ntn-gen-ifaces": "./bin/ntn-gen-ifaces.ts"
     },
     "exports": {
-        "./generated": {
-            "types": "./generated/ntn_interfaces.ts",
-            "default": "./generated/ntn_interfaces.ts"
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         },
-        "./engine": "./src/ntn-engine/ntn-engine.ts",
-        "./fetcher": "./src/ntn-fetcher/ntn-fetcher.ts",
-        "./parsers": "./src/ntn-parsers/index.ts"
+        "./engine": {
+            "types": "./dist/ntn-engine/ntn-engine.d.ts",
+            "default": "./dist/ntn-engine/ntn-engine.js"
+        },
+        "./fetcher": {
+            "types": "./dist/ntn-fetcher/ntn-fetcher.d.ts",
+            "default": "./dist/ntn-fetcher/ntn-fetcher.js"
+        },
+        "./parsers": {
+            "types": "./dist/ntn-parsers/index.d.ts",
+            "default": "./dist/ntn-parsers/index.js"
+        }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "keywords": [],
     "author": "",

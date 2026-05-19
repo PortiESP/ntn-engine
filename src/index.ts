@@ -1,1 +1,1 @@
-import { NotionEngine } from "./ntn-engine/ntn-engine";
+export { NotionEngine } from "./ntn-engine/ntn-engine.js";

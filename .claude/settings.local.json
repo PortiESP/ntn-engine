@@ -8,7 +8,8 @@
       "Bash(Remove-Item \"src\\\\ntn-fetcher\\\\ntn-fetcher.utils.ts\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Porti\\\\Desktop\\\\Projects-2026\\\\microservicios\\\\notion-db-engine\" -Recurse -Filter \"*.ts\" -Top 20)",
       "Bash(Select-Object FullName)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(pnpm build *)"
     ]
   }
 }
