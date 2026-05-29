@@ -1,6 +1,5 @@
 export class CacheService {
     private cache = new Map<string, { value: any; expiry: number }>();
-    private _skipNext: boolean = false;
 
     /**
      * @param defaultTTL Default Time-To-Live in seconds
@@ -8,21 +7,9 @@ export class CacheService {
     constructor(private defaultTTL: number = 60) {}
 
     /**
-     * Skips the next cache retrieval, forcing a cache miss.
-     */
-    skipNext(): void {
-        this._skipNext = true;
-    }
-
-    /**
      * Retrieve a value from the cache. Returns null if missing or expired.
      */
     get<T>(key: string): T | null {
-        if (this._skipNext) {
-            this._skipNext = false;
-            return null;
-        }
-
         const item = this.cache.get(key);
         if (!item) return null;
 
@@ -36,16 +23,14 @@ export class CacheService {
     }
 
     /**
-     * Try to get a value from cache. If it misses, execute the fallback function, cache the result, and return it.
-     * @param key Unique cache key
-     * @param fallback Optional async function to execute if cache misses
-     * @param ttl Custom TTL in seconds
+     * Returns the cached value if present; otherwise runs the fallback, caches the result, and returns it.
+     * @param key      Unique cache key
+     * @param fallback Async function that produces the value on a cache miss
+     * @param ttl      Custom TTL in seconds
      */
-    async tryCacheOrFallback<T>(key: string, fallback?: () => Promise<T>, ttl: number = this.defaultTTL): Promise<T | null> {
+    async tryCacheOrFallback<T>(key: string, fallback: () => Promise<T>, ttl: number = this.defaultTTL): Promise<T> {
         const cached = this.get<T>(key);
         if (cached !== null) return cached;
-
-        if (!fallback) return null;
 
         const result = await fallback();
         this.set(key, result, ttl);

@@ -9,8 +9,8 @@ export type T_AppendImageOptions = {
 }
 
 export type T_Fetcher_Options = {
-    /** Notion API Token */
-    notionToken: string;
+    /** Notion API Token. If omitted, falls back to process.env.NOTION_TOKEN. */
+    notionToken?: string;
 }
 
 export type T_Cache_Options = {

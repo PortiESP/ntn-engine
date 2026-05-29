@@ -8,16 +8,11 @@ export class NotionFetcher {
     client: Client;
     options: T_Fetcher_Options;
 
-    constructor(options: T_Fetcher_Options) {
+    constructor(options: T_Fetcher_Options = {}) {
         this.options = options;
         this.client = new Client({
             auth: this.options.notionToken || process.env.NOTION_TOKEN,
         });
-
-        if (!this.client) {
-            throw new Error("[NotionDBEngine] Error al inicializar el cliente de Notion.");
-        }
-
     }
 
 
@@ -28,24 +23,14 @@ export class NotionFetcher {
 
     // ---------------------- Users ----------------------
 
-    /**
-     * Get all users
-     * 
-     * ⚠️ This method depends on the "User capabilities" configuration to be enabled.
-     * 
-     */
+    /** ⚠️ Requires "User capabilities" to be enabled on the integration. */
     async getUsers() {
         return await this.client.users.list({
             page_size: 100,
         }).then((res) => res.results.filter((user) => user.type === 'person') as PersonUserObjectResponse[]);
     }
 
-    /**
-     * Get all bots
-     * 
-     * ⚠️ This method depends on the "User capabilities" configuration to be enabled.
-     * 
-     */
+    /** ⚠️ Requires "User capabilities" to be enabled on the integration. */
     async getBots() {
         return await this.client.users.list({
             page_size: 100,
@@ -57,15 +42,18 @@ export class NotionFetcher {
     /**
      * Get all datasources
      */
-    async getAllDatasources() {
-        return await this.client.search({
-            filter: {
-                property: 'object',
-                value: 'data_source',
-            },
-        })
-            // Parse the results (if callback is provided)
-            .then((res) => res.results as DataSourceObjectResponse[]);
+    async getAllDatasources(): Promise<DataSourceObjectResponse[]> {
+        const results: DataSourceObjectResponse[] = [];
+        let cursor: string | undefined;
+        do {
+            const res = await this.client.search({
+                filter: { property: "object", value: "data_source" },
+                start_cursor: cursor,
+            });
+            results.push(...(res.results as DataSourceObjectResponse[]));
+            cursor = res.next_cursor ?? undefined;
+        } while (cursor);
+        return results;
     }
 
     /**
@@ -82,70 +70,24 @@ export class NotionFetcher {
     }
 
     /**
-     * Get a datasource rows by id
-     * 
-     * @param id - Datasource id
-     * @param query - Query parameters
-     * 
-     * ---
-     * 
-     * @example
-     * 
-     * ```typescript
-     * const data = await ntn.getDatasourceData('123', {
-     *     filter: {
-     *         property: 'name',
-     *         rich_text: {
-     *             equals: 'John',
-     *         },
-     *     },
-     * });
-     * ```
-     * 
-     * @example
-     * 
-     * ```typescript
-     *      const response = await notion.dataSources.query({
-     *          data_source_id: "d9824bdc-8445-4327-be8b-5b47500af6ce",
-     *          filter: {
-     *              property: "Status",
-     *              select: { equals: "Done" }
-     *          },
-     *          sorts: [
-     *              {
-     *                  property: "Created",
-     *                  direction: "descending"
-     *              }
-     *          ]
-     *      })
-     * ```
-     * 
-     * @example Using AND logic in filters
-     * 
-     * ```typescript
-     *      const response = await notion.dataSources.query({
-     *          data_source_id: "d9824bdc-8445-4327-be8b-5b47500af6ce",
-     *          filter: {
-     *              and: [
-     *                  {
-     *                      property: "Status",
-     *                      select: { equals: "Done" }
-     *                  },
-     *                  {
-     *                      property: "Priority",
-     *                      select: { equals: "High" }
-     *                  }
-     *              ]
-     *          }
-     *      })
-     * ```
-     * 
+     * Get all entries in a datasource (handles pagination automatically).
+     *
+     * @param id    - Datasource id
+     * @param query - Optional filter/sort parameters
      */
-    async getDatasourceEntries(id: string, query?: QueryDataSourceParameters) {
-        return await this.client.dataSources.query({
-            ...query,
-            data_source_id: id,
-        }).then((res) => res.results) as PageObjectResponse[];
+    async getDatasourceEntries(id: string, query?: QueryDataSourceParameters): Promise<PageObjectResponse[]> {
+        const results: PageObjectResponse[] = [];
+        let cursor: string | undefined;
+        do {
+            const res = await this.client.dataSources.query({
+                ...query,
+                data_source_id: id,
+                start_cursor: cursor,
+            });
+            results.push(...(res.results as PageObjectResponse[]));
+            cursor = res.next_cursor ?? undefined;
+        } while (cursor);
+        return results;
     }
 
     /**
@@ -216,13 +158,18 @@ export class NotionFetcher {
      * 
      * @param query - Query parameters
      */
-    async getAllPages() {
-        return await this.client.search({
-            filter: {
-                property: 'object',
-                value: 'page',
-            },
-        }).then((res) => res.results as PageObjectResponse[]);
+    async getAllPages(): Promise<PageObjectResponse[]> {
+        const results: PageObjectResponse[] = [];
+        let cursor: string | undefined;
+        do {
+            const res = await this.client.search({
+                filter: { property: "object", value: "page" },
+                start_cursor: cursor,
+            });
+            results.push(...(res.results as PageObjectResponse[]));
+            cursor = res.next_cursor ?? undefined;
+        } while (cursor);
+        return results;
     }
 
     /**
@@ -455,11 +402,14 @@ function mimeFromExt(filename: string): string {
     return MIME[ext] ?? "application/octet-stream";
 }
 
-config()
-if (!process.env.NOTION_TOKEN) {
-    throw new Error("NOTION_TOKEN not found in environment variables");
-}
+config();
 
-export const ntn = new NotionFetcher({ notionToken: process.env.NOTION_TOKEN, });
+// Pre-built singleton for Node.js environments.
+// Reads NOTION_TOKEN from process.env (populated by dotenv above).
+// In framework environments (Astro, Vite, …) this import is safe even without NOTION_TOKEN set —
+// the token is validated only when the first API call is made.
+// To use a different token or env var name, instantiate directly:
+//   new NotionFetcher({ notionToken: import.meta.env.NOTION_TOKEN })
+export const ntn = new NotionFetcher();
 
 

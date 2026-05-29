@@ -25,7 +25,8 @@ export function generateTSInterface(schema: DataSourceObjectResponse, options?: 
 
     iface += `};`;
 
-    const imports = `import {${notionObjectResponseTypes.join(', ')}} from '@notionhq/client'\n`;
+    const uniqueTypes = [...new Set(notionObjectResponseTypes)];
+    const imports = `import { ${uniqueTypes.join(", ")} } from "@notionhq/client"\n`;
 
     return {
         imports,

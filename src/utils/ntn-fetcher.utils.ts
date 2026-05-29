@@ -1,9 +1,5 @@
 import { RichTextItemResponse } from "@notionhq/client";
 
-export function normalizeId(id: string): string {
-    return id.replace(/-/g, '');
-}
-
 export function richText2String(richText: RichTextItemResponse[]): string {
     return richText.map((rt) => rt.plain_text).join("");
 }

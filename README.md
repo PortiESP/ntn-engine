@@ -12,8 +12,6 @@ pnpm add @porti/ntn-engine
 
 ## Environment Variables
 
-Create a `.env` file in your project root:
-
 ```env
 NOTION_TOKEN=your_notion_integration_token
 
@@ -25,87 +23,97 @@ To get your `NOTION_TOKEN`, go to [https://www.notion.so/profile/integrations](h
 
 ## Quick Start
 
+Import the pre-built singleton and call methods directly — no setup required.
+
+```typescript
+import { engine } from "@porti/ntn-engine";
+
+const entries = await engine.getEntries("My Projects");
+const entry   = await engine.getEntry("My Projects", "My first project");
+const content = await engine.getEntryContent("My Projects", "My first project");
+const schema  = await engine.getSchema("My Projects");
+const blocks  = await engine.getPageContent("page-id-here");
+```
+
+If you need a custom configuration (e.g. caching), instantiate your own:
+
 ```typescript
 import { NotionEngine } from "@porti/ntn-engine";
 
-const engine = new NotionEngine();
-
-// Initialize with the exact names of your Notion databases
-await engine.setup(["My Projects", "Tasks"]);
-
-// Read entries
-const entries = await engine.getEntries("My Projects");
-
-// Read a single entry
-const entry = await engine.getEntry("My Projects", "page-id-here");
-
-// Read a page's block content
-const content = await engine.getEntryContent("My Projects", "page-id-here");
-
-// Read the database schema
-const schema = await engine.getSchema("My Projects");
+const myEngine = new NotionEngine({ enabled: true, ttl: 300 });
 ```
 
 ## Write Operations
 
 ```typescript
 // Create an entry
-await engine.createEntry("Tasks", {
-    Name: { title: [{ text: { content: "New task" } }] },
+await engine.createEntry("My Pages", {
+    Name: { title: [{ text: { content: "New page" } }] },
     Status: { select: { name: "In progress" } },
 });
 
-// Update an entry
-await engine.updateEntry("Tasks", "page-id-here", {
+// Update an entry by its page title
+await engine.updateEntry("My Pages", "New page", {
     Status: { select: { name: "Done" } },
 });
 
-// Delete an entry (moves to trash)
-await engine.deleteEntry("Tasks", "page-id-here");
+// Delete an entry by its page title (moves to trash)
+await engine.deleteEntry("My Pages", "New page");
 ```
 
 ## Querying with Filters
 
-The `getEntries` method accepts the standard Notion query parameters:
+`getEntries` accepts standard Notion query parameters:
 
 ```typescript
-const filtered = await engine.getEntries("Tasks", {
+const filtered = await engine.getEntries("My Pages", {
     filter: {
         property: "Status",
         select: { equals: "In progress" },
     },
-    sorts: [
-        { property: "Created", direction: "descending" },
-    ],
+    sorts: [{ property: "Created", direction: "descending" }],
 });
+```
+
+## Using IDs Directly
+
+Every title-based method has a `*ById` variant. Use these when you already have the page ID to skip the title lookup:
+
+```typescript
+const pageId = "3d4f1a2b-...";
+
+const entry   = await engine.getEntryById("My Pages", pageId);
+const content = await engine.getEntryContentById("My Pages", pageId);
+
+await engine.updateEntryById("My Pages", pageId, { Status: { select: { name: "Done" } } });
+await engine.deleteEntryById("My Pages", pageId);
+await engine.appendImageBlockById("My Pages", pageId, { data: buffer, filename: "photo.png" });
+await engine.setFilePropertyById("My Pages", pageId, "Attachments", [{ data: buffer, filename: "doc.pdf" }]);
 ```
 
 ## Cache
 
-Pass cache options to `setup` to avoid redundant API calls:
+Pass cache options to the constructor to avoid redundant API calls:
 
 ```typescript
-await engine.setup(["My Projects", "Tasks"], {
-    enabled: true,
-    ttl: 60, // seconds — defaults to 60
-});
+const engine = new NotionEngine({ enabled: true, ttl: 300 }); // TTL in seconds, defaults to 60
 ```
 
-Cache is invalidated automatically on any write operation (create, update, delete, file upload) for that database.
+Cache is invalidated automatically on any write operation (create, update, delete, file upload).
 
 ## File Uploads
 
 ```typescript
 import fs from "fs";
 
-// Append an image block to a page
-await engine.appendImageBlock("Tasks", "page-id-here", {
+// Append an image block to a page (by title)
+await engine.appendImageBlock("My Pages", "New page", {
     data: fs.readFileSync("./photo.png"),
     filename: "photo.png",
 });
 
-// Set a files-type property on an entry
-await engine.setFileProperty("Tasks", "page-id-here", "Attachments", [
+// Set a files-type property on an entry (by title)
+await engine.setFileProperty("My Pages", "New page", "Attachments", [
     { data: fs.readFileSync("./doc.pdf"), filename: "doc.pdf" },
 ]);
 ```
@@ -114,9 +122,7 @@ await engine.setFileProperty("Tasks", "page-id-here", "Attachments", [
 
 `NotionEngine` has built-in webhook handling that verifies the request signature and automatically invalidates the cache for the affected database.
 
-### 1. Set up the env var
-
-Add the webhook verification token to your `.env`:
+### 1. Add the env var
 
 ```env
 NOTION_WEBHOOK_VERIFICATION_TOKEN=your_webhook_verification_token
@@ -131,37 +137,50 @@ import { NotionEngine } from "@porti/ntn-engine";
 
 const app = express();
 const engine = new NotionEngine();
-await engine.setup(["My Projects", "Tasks"]);
 
 app.post("/notion-webhook", express.json(), async (req, res) => {
-    const signature = req.headers["x-notion-signature"] as string;
-    await engine.handleWebhook(req.body, signature);
-    res.sendStatus(200);
+    try {
+        const signature = req.headers["x-notion-signature"] as string;
+        await engine.handleWebhook(req.body, signature);
+        res.sendStatus(200);
+    } catch (err) {
+        res.sendStatus(400);
+    }
 });
 ```
 
 ### 3. Register and verify the webhook in Notion
 
 1. Go to your integration settings → **Webhooks** tab → create a new webhook pointing to your endpoint.
-2. Notion will send a `POST` with a `verification_token` in the body. The engine will log it to the console:
+2. Notion sends a `POST` with a `verification_token` in the body. The engine logs it to the console:
    ```
    [NOTION VERIFICATION TOKEN]: abc123...
    ```
-3. Copy that token and:
-   - Paste it into `NOTION_WEBHOOK_VERIFICATION_TOKEN` in your `.env`
-   - Paste it in the Notion integration webhook settings and click **Verify**
+3. Copy that token into `NOTION_WEBHOOK_VERIFICATION_TOKEN` in your `.env`, and paste it in the Notion integration webhook settings → click **Verify**.
 
-After verification, the engine will validate the `x-notion-signature` header on every incoming request and invalidate the relevant database cache when page events are received.
+After verification, every incoming request is validated against the `x-notion-signature` header. Invalid signatures throw, so wrap `handleWebhook` in a try/catch and respond with `400` on failure.
+
+## Framework Environments (Astro, Vite, Next.js, …)
+
+In framework environments that use `import.meta.env` instead of `process.env`, instantiate `NotionFetcher` directly and pass the token explicitly:
+
+```typescript
+import { NotionFetcher } from "@porti/ntn-engine/fetcher";
+
+const fetcher = new NotionFetcher({ notionToken: import.meta.env.NOTION_TOKEN });
+```
+
+The `NotionEngine` class is framework-safe to import — it does not read environment variables at module load time.
 
 ## CLI — Generate TypeScript Interfaces
 
-The package ships a CLI tool that connects to your Notion workspace and generates TypeScript interfaces for all your databases into `./generated/ntn_interfaces.ts`.
+The package ships a CLI tool that generates TypeScript interfaces for all your databases into `./generated/ntn_interfaces.ts`.
 
 ```bash
 npx ntn-gen-ifaces
 ```
 
-Requires `NOTION_TOKEN` in the environment. You can then import the generated types:
+Requires `NOTION_TOKEN` in the environment. Import the generated types:
 
 ```typescript
 import type { NTN_MyProjects } from "./generated/ntn_interfaces";

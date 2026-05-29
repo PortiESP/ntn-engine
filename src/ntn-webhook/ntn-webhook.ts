@@ -1,7 +1,7 @@
 import { BaseWebhookPayload, PagePropertiesUpdatedWebhookPayload } from "@notionhq/client";
 import crypto from "crypto";
 
-const NOTION_WEBHOOK_VERIFICATION_TOKEN: string = process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN || "";
+const getWebhookToken = (): string => process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN ?? "";
 
 /**
  * Handles the Notion webhook verification.
@@ -13,18 +13,11 @@ const NOTION_WEBHOOK_VERIFICATION_TOKEN: string = process.env.NOTION_WEBHOOK_VER
  * @param signature Request signature from the request headers ["x-notion-signature"].
  */
 export const handleWebhookVerification = async (body: BaseWebhookPayload, signature: string): Promise<void> => {
-    try {
-        // If the body contains a verification token, print it and return. (that's not a real webhook event)
-        if (checkIsVerificationTokenMessage(body)) return;
+    // If the body contains a verification token, print it and return. (that's not a real webhook event)
+    if (checkIsVerificationTokenMessage(body)) return;
 
-        // Check request integrity
-        if (!checkRequestIntegrity(body, signature)) throw new Error("Invalid Notion signature");
-
-        return;
-
-    } catch (error) {
-        console.error("[ERROR] Failed to process Notion webhook:", error)
-    }
+    // Check request integrity — throws on failure so callers can handle it
+    if (!checkRequestIntegrity(body, signature)) throw new Error("Invalid Notion signature");
 }
 
 
@@ -54,7 +47,7 @@ function checkIsVerificationTokenMessage(body: Record<string, any>): boolean {
  * Verifies the webhook signature to ensure the request is from Notion.
  */
 function checkRequestIntegrity(body: Record<string, any>, signature: string): boolean {
-    const secret = NOTION_WEBHOOK_VERIFICATION_TOKEN;
+    const secret = getWebhookToken();
     if (!secret) {
         console.error("[ERROR] WebhookVerificationError: NOTION_WEBHOOK_VERIFICATION_TOKEN not configured");
         return false;

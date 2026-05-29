@@ -1,6 +1,6 @@
 import { BlockObjectResponse } from "@notionhq/client";
 import { richText2String } from "../../utils/ntn-fetcher.utils.js";
-import { richTextToHTML } from "../../utils/parsers.utils.js";
+import { escapeAttr, escapeHTML, richTextToHTML } from "../../utils/parsers.utils.js";
 
 export function parseHTML(blocks: BlockObjectResponse[]): string {
     return parseHTMLBlocks(blocks);
@@ -91,7 +91,7 @@ function parseHTMLBlock(block: BlockObjectResponse): string {
             const url = block.image.type === "external" ? block.image.external.url : block.image.file.url;
             const captionPlain = richText2String(block.image.caption);
             const captionHTML  = richTextToHTML(block.image.caption);
-            return `<figure data-block-type="image"><img src="${url}" alt="${captionPlain}"><figcaption>${captionHTML}</figcaption></figure>`;
+            return `<figure data-block-type="image"><img src="${escapeAttr(url)}" alt="${escapeAttr(captionPlain)}"><figcaption>${captionHTML}</figcaption></figure>`;
         }
         case "video": {
             const raw = block.video.type === "external" ? block.video.external.url : block.video.file.url;
@@ -119,7 +119,7 @@ function parseHTMLBlock(block: BlockObjectResponse): string {
         case "file": {
             const url = block.file.type === "external" ? block.file.external.url : block.file.file.url;
             const caption = richText2String(block.file.caption);
-            return `<a data-block-type="file" href="${url}">${caption || block.file.name}</a>`;
+            return `<a data-block-type="file" href="${escapeAttr(url)}">${escapeHTML(caption || block.file.name)}</a>`;
         }
         case "bookmark": {
             const caption = richText2String(block.bookmark.caption);
@@ -174,9 +174,9 @@ function parseHTMLBlock(block: BlockObjectResponse): string {
         case "synced_block":
             return children.length ? parseHTMLBlocks(children) : "";
         case "child_page":
-            return `<strong data-block-type="child_page">${block.child_page.title}</strong>`;
+            return `<strong data-block-type="child_page">${escapeHTML(block.child_page.title)}</strong>`;
         case "child_database":
-            return `<strong data-block-type="child_database">${block.child_database.title}</strong>`;
+            return `<strong data-block-type="child_database">${escapeHTML(block.child_database.title)}</strong>`;
         default:
             return "";
     }

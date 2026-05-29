@@ -63,7 +63,7 @@ export function richTextToHTML(richText: RichTextItemResponse[]): string {
     }).join("");
 }
 
-function escapeHTML(text: string): string {
+export function escapeHTML(text: string): string {
     return text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -71,6 +71,6 @@ function escapeHTML(text: string): string {
         .replace(/"/g, "&quot;");
 }
 
-function escapeAttr(text: string): string {
+export function escapeAttr(text: string): string {
     return text.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
