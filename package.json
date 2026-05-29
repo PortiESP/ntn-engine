@@ -1,6 +1,6 @@
 {
     "name": "@porti-esp/ntn-engine",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "description": "Notion database engine for querying and managing Notion databases",
     "type": "module",
     "main": "dist/index.js",
