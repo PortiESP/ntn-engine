@@ -6,7 +6,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "repository": {
-        "url": "https://github.com/PortiESP/ntn-engine"
+        "type": "git",
+        "url": "git+https://github.com/PortiESP/ntn-engine.git"
     },
     "files": [
         "dist",
