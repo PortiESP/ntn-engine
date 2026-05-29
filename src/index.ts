@@ -1,4 +1,5 @@
 export { NotionEngine } from "./ntn-engine/ntn-engine.js";
+export type { T_ParsedBlock } from "./ntn-parsers/index.js";
 
 import { NotionEngine } from "./ntn-engine/ntn-engine.js";
 

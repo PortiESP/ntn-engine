@@ -1,6 +1,6 @@
-type T_ParsedBlockBase = { children?: T_ParsedBlock[] }
+type T_ParsedBlockBase = { id?: string; children?: T_ParsedBlock[] }
 
-type T_ParsedBlockText     = T_ParsedBlockBase & { type: "paragraph" | "quote" | "bulleted_list_item" | "numbered_list_item" | "toggle"; text: string }
+type T_ParsedBlockText     = T_ParsedBlockBase & { type: "paragraph" | "quote" | "bulleted_list_item" | "numbered_list_item" | "toggle"; text: string; isCode?: boolean; html?: string }
 type T_ParsedBlockHeading  = T_ParsedBlockBase & { type: "heading_1" | "heading_2" | "heading_3" | "heading_4"; text: string; level: 1 | 2 | 3 | 4 }
 type T_ParsedBlockToDo     = T_ParsedBlockBase & { type: "to_do"; text: string; checked: boolean }
 type T_ParsedBlockCode     = T_ParsedBlockBase & { type: "code"; text: string; language: string }

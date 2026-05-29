@@ -1,7 +1,8 @@
 {
     "name": "@porti-esp/ntn-engine",
-    "version": "2.0.0",
+    "version": "2.0.2",
     "description": "Notion database engine for querying and managing Notion databases",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "repository": {
@@ -16,7 +17,7 @@
         "clean": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\"",
         "build": "pnpm clean && tsc",
         "start": "node dist/index.js",
-        "test": "node --require tsx/cjs --test tests/engine.test.ts tests/parsers.test.ts tests/webhook.test.ts",
+        "test": "node --import tsx/esm --test tests/engine.test.ts tests/parsers.test.ts tests/webhook.test.ts",
         "prepublishOnly": "pnpm build",
         "publish:npm": "pnpm prepublishOnly && npm publish --access public"
     },

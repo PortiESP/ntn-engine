@@ -1,5 +1,5 @@
-import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "../utils/ntn-fetcher.utils";
-import { T_GenerateTSInterfaceOptions } from "./ntn-fetcher.types";
+import { PROPERTY_ITEM_OBJECT_RESPONSE, richText2String } from "../utils/ntn-fetcher.utils.js";
+import { T_GenerateTSInterfaceOptions } from "./ntn-fetcher.types.js";
 import { DataSourceObjectResponse } from "@notionhq/client";
 
 export function generateTSInterface(schema: DataSourceObjectResponse, options?: T_GenerateTSInterfaceOptions) {

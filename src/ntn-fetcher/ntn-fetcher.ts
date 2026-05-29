@@ -1,8 +1,8 @@
 import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
-import { T_AppendImageOptions, T_GenerateTSInterfaceOptions, T_Fetcher_Options, T_UploadFileInput } from "./ntn-fetcher.types";
+import { T_AppendImageOptions, T_GenerateTSInterfaceOptions, T_Fetcher_Options, T_UploadFileInput } from "./ntn-fetcher.types.js";
 import { config } from "dotenv";
-import { richText2String } from "../utils/ntn-fetcher.utils";
-import { generateTSInterface } from "./ts_iface_generator.utils";
+import { richText2String } from "../utils/ntn-fetcher.utils.js";
+import { generateTSInterface } from "./ts_iface_generator.utils.js";
 
 export class NotionFetcher {
     client: Client;

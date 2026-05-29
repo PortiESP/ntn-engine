@@ -4,6 +4,10 @@ export function richText2String(richText: RichTextItemResponse[]): string {
     return richText.map((rt) => rt.plain_text).join("");
 }
 
+export function isRichTextCode(richText: RichTextItemResponse[]): boolean {
+    return richText.some(rt => rt.annotations.code);
+}
+
 
 export const PROPERTY_ITEM_OBJECT_RESPONSE = [
     "NumberPropertyItemObjectResponse",
