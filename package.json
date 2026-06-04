@@ -1,6 +1,6 @@
 {
     "name": "@porti-esp/ntn-engine",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "Notion database engine for querying and managing Notion databases",
     "type": "module",
     "main": "dist/index.js",
@@ -20,10 +20,10 @@
         "start": "node dist/index.js",
         "test": "node --import tsx/esm --test tests/engine.test.ts tests/parsers.test.ts tests/webhook.test.ts",
         "prepublishOnly": "pnpm build",
-        "publish:npm": "pnpm prepublishOnly && npm publish --access public"
+        "publish": "pnpm prepublishOnly && npm publish --access public"
     },
     "bin": {
-        "ntn-gen-ifaces": "./bin/ntn-gen-ifaces.ts"
+        "ntn-gen-ifaces": "bin/ntn-gen-ifaces.ts"
     },
     "exports": {
         ".": {
