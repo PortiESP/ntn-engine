@@ -101,6 +101,16 @@ const engine = new NotionEngine({ enabled: true, ttl: 300 }); // TTL in seconds,
 
 Cache is invalidated automatically on any write operation (create, update, delete, file upload).
 
+You can also invalidate manually — useful when integrating with external webhook handlers:
+
+```typescript
+// Invalidate a specific datasource (by its Notion ID)
+engine.invalidateCache("<datasource-id>");
+
+// Clear the entire cache
+engine.invalidateCache();
+```
+
 ## File Uploads
 
 ```typescript
@@ -159,6 +169,37 @@ app.post("/notion-webhook", express.json(), async (req, res) => {
 3. Copy that token into `NOTION_WEBHOOK_VERIFICATION_TOKEN` in your `.env`, and paste it in the Notion integration webhook settings → click **Verify**.
 
 After verification, every incoming request is validated against the `x-notion-signature` header. Invalid signatures throw, so wrap `handleWebhook` in a try/catch and respond with `400` on failure.
+
+## Page Content
+
+`getPageContent` fetches all blocks of a page. By default, nested children are pre-loaded recursively:
+
+```typescript
+// Recursive (default) — all nested children pre-loaded in one call
+const blocks = await engine.getPageContent("page-id");
+
+// Non-recursive — only direct children of the given page/block
+const directChildren = await engine.getPageContent("page-id", false);
+
+// Also available on NotionFetcher directly:
+import { ntn } from "@porti/ntn-engine/fetcher";
+const blocks = await ntn.getPageContent("page-id", false);
+```
+
+The same `recursive` flag is available on `getEntryContent` and `getEntryContentById`.
+
+## Internal Mappings (NotionFetcher)
+
+After `getAllDatasources()` has been called (triggered automatically by any engine method), `ntn.dsId2DbId` exposes the datasource ID → parent database ID mapping:
+
+```typescript
+import { ntn } from "@porti/ntn-engine/fetcher";
+
+await ntn.getAllDatasources(); // populates the map
+const databaseId = ntn.dsId2DbId["<datasource-id>"];
+```
+
+This is useful when working with Notion webhooks that send `database_id` instead of `data_source_id`, and you need to map back to the datasource.
 
 ## Framework Environments (Astro, Vite, Next.js, …)
 

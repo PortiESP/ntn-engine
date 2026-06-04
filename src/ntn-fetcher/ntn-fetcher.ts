@@ -8,6 +8,9 @@ export class NotionFetcher {
     client: Client;
     options: T_Fetcher_Options;
 
+    /** Maps datasource ID → parent database ID. Populated automatically by `getAllDatasources()`. */
+    public dsId2DbId: Record<string, string> = {};
+
     constructor(options: T_Fetcher_Options = {}) {
         this.options = options;
         this.client = new Client({
@@ -53,6 +56,12 @@ export class NotionFetcher {
             results.push(...(res.results as DataSourceObjectResponse[]));
             cursor = res.next_cursor ?? undefined;
         } while (cursor);
+
+        for (const ds of results) {
+            const dbId = (ds as any).database_parent?.database_id;
+            if (dbId) this.dsId2DbId[ds.id] = dbId;
+        }
+
         return results;
     }
 
@@ -227,11 +236,13 @@ export class NotionFetcher {
     // ---------------------- Page content ----------------------
 
     /**
-     * Get a page content by id
-     * 
-     * @param id - Page id
+     * Get a page content by id.
+     *
+     * @param blockId   - Page or block id
+     * @param recursive - When `true` (default), nested children are pre-loaded recursively.
+     *                    Pass `false` to fetch only direct children of the given block.
      */
-    async getPageContent(blockId: string) {
+    async getPageContent(blockId: string, recursive: boolean = true): Promise<BlockObjectResponse[]> {
         const blocks: BlockObjectResponse[] = [];
         let cursor;
 
@@ -245,8 +256,8 @@ export class NotionFetcher {
             for (const block of response.results) {
                 if (!isFullBlock(block)) continue;
                 const item: any = { ...block };
-                if (block.has_children) {
-                    item.children = await this.getPageContent(block.id);
+                if (recursive && block.has_children) {
+                    item.children = await this.getPageContent(block.id, recursive);
                 }
                 blocks.push(item);
             }

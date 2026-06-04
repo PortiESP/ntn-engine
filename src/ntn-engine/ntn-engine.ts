@@ -37,7 +37,23 @@ export class NotionEngine {
     }
 
     private invalidate(id: string): void {
-        this.cache?.deleteByPrefix(id);
+        this.invalidateCache(id);
+    }
+
+    /**
+     * Invalidates the cache for a specific datasource (by ID prefix) or clears the entire cache.
+     * Useful when integrating with external webhook handlers that manage their own cache lifecycle.
+     *
+     * @param datasourceId - If provided, only entries for that datasource are removed.
+     *                       If omitted, the entire cache is cleared.
+     */
+    public invalidateCache(datasourceId?: string): void {
+        if (!this.cache) return;
+        if (datasourceId) {
+            this.cache.deleteByPrefix(datasourceId);
+        } else {
+            this.cache.clear();
+        }
     }
 
     /**
@@ -59,11 +75,15 @@ export class NotionEngine {
     // ---------------------- Read ----------------------
 
     /**
-     * Returns all blocks of a page with nested children pre-loaded recursively.
+     * Returns all blocks of a page.
      * Use when you have a page ID but no database context.
+     *
+     * @param pageId    - The Notion page or block ID
+     * @param recursive - When `true` (default), nested children are pre-loaded recursively.
+     *                    Pass `false` to fetch only direct children.
      */
-    public async getPageContent(pageId: string) {
-        return ntn.getPageContent(pageId);
+    public async getPageContent(pageId: string, recursive: boolean = true) {
+        return ntn.getPageContent(pageId, recursive);
     }
 
     public async getSchema(dbName: string) {
@@ -104,19 +124,19 @@ export class NotionEngine {
      * Returns the block content of the entry whose page title matches `title`.
      * Fetches all entries first — use `getEntryContentById` when you have the page ID.
      */
-    public async getEntryContent(dbName: string, title: string) {
+    public async getEntryContent(dbName: string, title: string, recursive: boolean = true) {
         const entry = await this.findEntryByTitle(dbName, title);
-        return this.getEntryContentById(dbName, entry.id);
+        return this.getEntryContentById(dbName, entry.id, recursive);
     }
 
     /**
      * Returns the block content of an entry by its Notion page ID.
      */
-    public async getEntryContentById(dbName: string, entryId: string) {
+    public async getEntryContentById(dbName: string, entryId: string, recursive: boolean = true) {
         const id = await this.resolveId(dbName);
         return this.cache
-            ? this.cache.tryCacheOrFallback(`${id}:content:${entryId}`, () => ntn.getPageContent(entryId))
-            : ntn.getPageContent(entryId);
+            ? this.cache.tryCacheOrFallback(`${id}:content:${entryId}`, () => ntn.getPageContent(entryId, recursive))
+            : ntn.getPageContent(entryId, recursive);
     }
 
     // ---------------------- Write ----------------------
