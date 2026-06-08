@@ -35,3 +35,23 @@ export type T_GenerateTSInterfaceOptions = {
     includeProperties?: string[];
 
 }
+
+export type T_PageIcon =
+    | { type: 'emoji'; emoji: string }
+    | { type: 'external'; external: { url: string } }
+    | { type: 'file_upload'; file_upload: { id: string } }
+    | null;
+
+export type T_PageCover =
+    | { type: 'external'; external: { url: string } }
+    | { type: 'file_upload'; file_upload: { id: string } }
+    | null;
+
+/** Structured data object accepted by all page write methods. */
+export type T_PageData = {
+    properties?: Record<string, any>;
+    icon?: T_PageIcon;
+    cover?: T_PageCover;
+    archived?: boolean;
+    in_trash?: boolean;
+};

@@ -1,5 +1,5 @@
 import { BlockObjectResponse, BotUserObjectResponse, Client, DataSourceObjectResponse, isFullBlock, MultiSelectPropertyItemObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PersonUserObjectResponse, PropertyItemObjectResponse, QueryDataSourceParameters } from "@notionhq/client";
-import { T_AppendImageOptions, T_GenerateTSInterfaceOptions, T_Fetcher_Options, T_UploadFileInput } from "./ntn-fetcher.types.js";
+import { T_AppendImageOptions, T_GenerateTSInterfaceOptions, T_Fetcher_Options, T_PageData, T_UploadFileInput } from "./ntn-fetcher.types.js";
 import { config } from "dotenv";
 import { richText2String } from "../utils/ntn-fetcher.utils.js";
 import { generateTSInterface } from "./ts_iface_generator.utils.js";
@@ -137,10 +137,10 @@ export class NotionFetcher {
      * @param id - Datasource row id
      * @param data - Data to update
      */
-    async updateDatasourceEntry(id: string, data: any) {
+    async updateDatasourceEntry(id: string, data: T_PageData) {
         return await this.client.pages.update({
             page_id: id,
-            properties: data,
+            ...data,
         }) as PageObjectResponse;
     }
 
@@ -150,12 +150,12 @@ export class NotionFetcher {
      * @param id - Datasource id
      * @param data - Data to create
      */
-    async createDatasourceEntry(id: string, data: any) {
+    async createDatasourceEntry(id: string, data: T_PageData) {
         return await this.client.pages.create({
             parent: {
                 data_source_id: id,
             },
-            properties: data,
+            ...data,
         }) as PageObjectResponse;
     }
 
@@ -211,10 +211,10 @@ export class NotionFetcher {
      * @param id - Page id
      * @param data - Data to update
      */
-    async updatePage(id: string, data: any) {
+    async updatePage(id: string, data: T_PageData) {
         return await this.client.pages.update({
             page_id: id,
-            properties: data,
+            ...data,
         }) as PageObjectResponse;
     }
 
@@ -224,12 +224,12 @@ export class NotionFetcher {
      * @param id - Page id
      * @param data - Data to create
      */
-    async createPage(id: string, data: any) {
+    async createPage(id: string, data: T_PageData) {
         return await this.client.pages.create({
             parent: {
                 page_id: id,
             },
-            properties: data,
+            ...data,
         }) as PageObjectResponse;
     }
 
@@ -385,7 +385,7 @@ export class NotionFetcher {
             newFiles.unshift(...existing);
         }
 
-        return this.updateDatasourceEntry(pageId, { [propertyName]: { files: newFiles } });
+        return this.updateDatasourceEntry(pageId, { properties: { [propertyName]: { files: newFiles } } });
     }
 
     // ---------------------- Generated TS Interface ----------------------
