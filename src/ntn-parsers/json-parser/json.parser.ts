@@ -126,18 +126,23 @@ export function parsePlainJSON(blocks: BlockObjectResponse[], groupLists = true)
                 result.push({ id: block.id, type: "link_preview", url: block.link_preview.url });
                 break;
             case "table": {
-                const rows = children
-                    .filter(c => c.type === "table_row")
-                    .map(row => {
-                        if (row.type !== "table_row") return [] as string[];
-                        return row.table_row.cells.map(cell => richText2String(cell));
-                    });
-                result.push({ id: block.id, type: "table", has_column_header: block.table.has_column_header, has_row_header: block.table.has_row_header, rows });
+                const rowBlocks = children.filter(c => c.type === "table_row");
+                const rows = rowBlocks.map(row => {
+                    if (row.type !== "table_row") return [] as string[];
+                    return row.table_row.cells.map(cell => richText2String(cell));
+                });
+                // HTML representation of each cell — preserves links/formatting (e.g. <a href>)
+                const rows_html = rowBlocks.map(row => {
+                    if (row.type !== "table_row") return [] as string[];
+                    return row.table_row.cells.map(cell => richTextToHTML(cell));
+                });
+                result.push({ id: block.id, type: "table", has_column_header: block.table.has_column_header, has_row_header: block.table.has_row_header, rows, rows_html });
                 break;
             }
             case "table_row": {
                 const cells = block.table_row.cells.map(cell => richText2String(cell));
-                result.push({ id: block.id, type: "table_row", cells });
+                const cells_html = block.table_row.cells.map(cell => richTextToHTML(cell));
+                result.push({ id: block.id, type: "table_row", cells, cells_html });
                 break;
             }
             case "column_list":
